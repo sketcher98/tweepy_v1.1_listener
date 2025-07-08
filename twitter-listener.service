@@ -1,0 +1,13 @@
+[Unit]
+Description=Twitter Real-time Listener
+After=network.target
+
+[Service]
+User=ubuntu
+WorkingDirectory=/home/ubuntu/tweepy-twitter-listener
+ExecStart=/usr/bin/python3 /home/ubuntu/tweepy-twitter-listener/index.py
+Restart=always
+EnvironmentFile=/home/ubuntu/tweepy-twitter-listener/.env
+
+[Install]
+WantedBy=multi-user.target
