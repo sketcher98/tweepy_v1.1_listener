@@ -11,7 +11,9 @@ ACCESS_TOKEN = os.getenv("ACCESS_TOKEN")
 ACCESS_TOKEN_SECRET = os.getenv("ACCESS_TOKEN_SECRET")
 WEBHOOK_URL = os.getenv("WEBHOOK_URL")
 
-auth = tweepy.OAuth1UserHandler(API_KEY, API_SECRET, ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
+auth = tweepy.OAuthHandler(API_KEY, API_SECRET)
+auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
+
 api = tweepy.API(auth)
 
 class MyStreamListener(tweepy.StreamListener):
@@ -21,14 +23,15 @@ class MyStreamListener(tweepy.StreamListener):
             requests.post(WEBHOOK_URL, json={
                 "username": status.user.screen_name,
                 "tweet": status.text,
-                "tweet_id": status.id_str
+                "tweet_id": status.id_str,
+                "tweet_url": f"https://twitter.com/{status.user.screen_name}/status/{status.id_str}"
             })
         except Exception as e:
-            print("⚠️ Webhook error:", e)
+            print("⚠️ Webhook POST failed:", e)
 
     def on_error(self, status_code):
-        print(f"❌ Error: {status_code}")
-        return False  # stops stream on error
+        print(f"❌ Stream error: {status_code}")
+        return False
 
 with open("usernames.txt", "r") as f:
     usernames = [line.strip() for line in f if line.strip()]
@@ -42,7 +45,7 @@ for username in usernames:
     except Exception as e:
         print(f"Failed to resolve {username}: {e}")
 
-print("📡 Listening for tweets from:", usernames)
-stream_listener = MyStreamListener()
-stream = tweepy.Stream(auth=api.auth, listener=stream_listener)
+print("📡 Starting stream...")
+listener = MyStreamListener()
+stream = tweepy.Stream(auth=api.auth, listener=listener)
 stream.filter(follow=user_ids, is_async=False)
